@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomeCare AI</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,Arial,sans-serif;background:#0d0d16;color:#f5f5f7;min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;background:#11111c;border-right:1px solid #262638;padding:24px 16px;position:fixed;left:0;top:0;bottom:0}
+.brand{display:flex;gap:12px;align-items:center;padding:8px 10px 28px}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#8b5cf6,#5b21b6);display:grid;place-items:center;font-size:21px}
+.brand h2{font-size:17px}.brand p{font-size:11px;color:#9292a6;margin-top:3px}
+.nav{display:flex;flex-direction:column;gap:7px}
+.nav button{border:0;background:transparent;color:#aaaabc;text-align:left;padding:13px 14px;border-radius:10px;transition:.2s}
+.nav button:hover,.nav button.active{background:#242034;color:white}
+.main{margin-left:240px;width:calc(100% - 240px);padding:30px;max-width:1500px}
+.page{display:none}.page.active{display:block}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+.topbar h1{font-size:28px}.muted{color:#9292a6}
+.btn{border:0;border-radius:10px;padding:11px 16px;background:#7c3aed;color:#fff;font-weight:600}.btn:hover{background:#6d28d9}
+.btn.secondary{background:#252438}.btn.danger{background:#8f2634}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.card{background:#171722;border:1px solid #28283a;border-radius:16px;padding:20px}
+.stat-value{font-size:30px;font-weight:750;margin:9px 0}.stat-label{color:#9999aa;font-size:13px}
+.grid{display:grid;grid-template-columns:1.4fr .9fr;gap:18px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.asset-list{display:flex;flex-direction:column;gap:10px}
+.asset-row{display:flex;justify-content:space-between;align-items:center;padding:14px;background:#11111b;border:1px solid #272738;border-radius:12px}
+.asset-name{font-weight:650}.asset-meta{font-size:12px;color:#9999aa;margin-top:5px}
+.badge{font-size:11px;font-weight:700;padding:6px 9px;border-radius:999px;text-transform:uppercase}
+.badge.overdue{background:#4b1d25;color:#ff8e9b}.badge.today{background:#4d3b18;color:#ffd36a}
+.badge.upcoming{background:#32215c;color:#c5a5ff}.badge.healthy{background:#173c2d;color:#7ee2ae}
+.hero{padding:25px;border-radius:18px;background:linear-gradient(135deg,#4c1d95,#7c3aed,#312e81);margin-bottom:22px}
+.hero h2{font-size:25px;margin-bottom:8px}.hero p{color:#e9ddff;line-height:1.5}
+.quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.quick button{background:#ffffff18;border:1px solid #ffffff30;color:white;padding:9px 12px;border-radius:20px}
+.chatbox{height:480px;display:flex;flex-direction:column}
+.messages{flex:1;overflow:auto;padding:5px 2px 15px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:82%;padding:12px 14px;border-radius:13px;line-height:1.5;white-space:pre-wrap}
+.msg.user{align-self:flex-end;background:#6d28d9}.msg.ai{align-self:flex-start;background:#242433;border:1px solid #303044}
+.chat-input{display:flex;gap:8px;border-top:1px solid #29293a;padding-top:14px}.chat-input input{flex:1;background:#11111b;color:white;border:1px solid #303044;border-radius:10px;padding:12px}
+.assets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px}
+.asset-card h3{margin-bottom:6px}.asset-card .date{font-size:13px;color:#aaaabd;margin:8px 0 15px}
+.actions{display:flex;gap:7px;margin-top:15px}.actions button{flex:1}
+.empty{text-align:center;padding:35px;color:#8e8ea1}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.show{display:flex}.modal-box{width:100%;max-width:520px;background:#181824;border:1px solid #303044;border-radius:18px;padding:24px}
+.form{display:grid;gap:13px;margin-top:18px}.form label{font-size:12px;color:#aaaabc}.form input,.form select{width:100%;margin-top:6px;background:#10101a;color:white;border:1px solid #333348;border-radius:9px;padding:11px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.setting{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid #29293a}
+.toggle{width:48px;height:26px;border-radius:20px;background:#3b3b4d;position:relative;border:0}.toggle.on{background:#7c3aed}.toggle:after{content:"";position:absolute;width:20px;height:20px;top:3px;left:4px;border-radius:50%;background:white;transition:.2s}.toggle.on:after{left:24px}
+.toast{position:fixed;right:22px;bottom:22px;background:#242433;border:1px solid #44445a;padding:13px 16px;border-radius:10px;display:none;z-index:20}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.sidebar{width:190px}.main{margin-left:190px;width:calc(100% - 190px)}}
+@media(max-width:650px){.sidebar{position:static;width:100%;height:auto}.app{display:block}.main{margin-left:0;width:100%;padding:18px}.stats{grid-template-columns:1fr 1fr}.nav{display:grid;grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">🏠</div><div><h2>HomeCare AI</h2><p>Maintenance Agent</p></div></div>
+  <nav class="nav">
+    <button class="active" data-page="dashboard">📊 Dashboard</button>
+    <button data-page="assets">🏠 My Assets</button>
+    <button data-page="agent">✨ AI Agent</button>
+    <button data-page="settings">⚙️ Settings</button>
+  </nav>
+</aside>
+
+<main class="main">
+<section id="dashboard" class="page active">
+  <div class="topbar"><div><h1>Dashboard</h1><p class="muted">Keep your home running smoothly.</p></div><button class="btn" onclick="openModal()">+ Add Asset</button></div>
+  <div class="stats">
+    <div class="card"><div class="stat-label">TOTAL ASSETS</div><div class="stat-value" id="total">0</div></div>
+    <div class="card"><div class="stat-label">OVERDUE</div><div class="stat-value" id="overdue">0</div></div>
+    <div class="card"><div class="stat-label">DUE THIS WEEK</div><div class="stat-value" id="week">0</div></div>
+    <div class="card"><div class="stat-label">ON SCHEDULE</div><div class="stat-value" id="healthy">0</div></div>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="section-title"><h2>Maintenance Overview</h2><button class="btn secondary" onclick="showPage('assets')">View All</button></div><div id="overview" class="asset-list"></div></div>
+    <div class="card">
+      <div class="section-title"><h2>Quick AI Assistant</h2></div>
+      <div class="hero"><h2>Need help?</h2><p>Ask HomeCare AI about your maintenance schedule, assets, or what needs attention.</p><div class="quick"><button onclick="askQuick('What is overdue?')">What is overdue?</button><button onclick="askQuick('What is due this week?')">Due this week</button><button onclick="askQuick('Give me a maintenance summary')">Summary</button></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="assets" class="page">
+  <div class="topbar"><div><h1>My Assets</h1><p class="muted">Manage your appliances and maintenance schedules.</p></div><button class="btn" onclick="openModal()">+ Add Asset</button></div>
+  <div id="assetGrid" class="assets-grid"></div>
+</section>
+
+<section id="agent" class="page">
+  <div class="topbar"><div><h1>AI Agent</h1><p class="muted">Your intelligent home maintenance assistant.</p></div></div>
+  <div class="hero"><h2>HomeCare AI Assistant</h2><p>Ask questions about your home maintenance schedule. Dates are calculated by the Python backend.</p></div>
+  <div class="card chatbox">
+    <div id="messages" class="messages"><div class="msg ai">Hi! I'm HomeCare AI. Ask me things like “What is overdue?” or “What is due this week?”</div></div>
+    <div class="chat-input"><input id="question" placeholder="Ask your maintenance question..." onkeydown="if(event.key==='Enter')sendMessage()"><button class="btn" onclick="sendMessage()">Send</button></div>
+  </div>
+</section>
+
+<section id="settings" class="page">
+  <div class="topbar"><div><h1>Settings</h1><p class="muted">Manage your HomeCare AI preferences.</p></div></div>
+  <div class="card">
+    <div class="setting"><div><b>Dark Mode</b><p class="muted">Use the dark interface.</p></div><button id="darkToggle" class="toggle on" onclick="toggleDark()"></button></div>
+    <div class="setting"><div><b>Clear all assets</b><p class="muted">Remove all locally saved home assets.</p></div><button class="btn danger" onclick="clearAssets()">Clear</button></div>
+  </div>
+</section>
+</main>
+</div>
+
+<div id="modal" class="modal">
+<div class="modal-box">
+<h2 id="modalTitle">Add Asset</h2>
+<div class="form">
+<input type="hidden" id="editId">
+<label>Asset Name<input id="assetName" placeholder="e.g. Air Conditioner"></label>
+<label>Category<select id="category"><option>HVAC</option><option>Kitchen</option><option>Laundry</option><option>Electrical</option><option>Plumbing</option><option>Other</option></select></label>
+<label>Last Service Date<input id="lastService" type="date"></label>
+<label>Maintenance Interval<select id="interval"><option value="30">Every 30 days</option><option value="90">Every 90 days</option><option value="180">Every 6 months</option><option value="365">Every 1 year</option><option value="730">Every 2 years</option></select></label>
+</div>
+<div class="modal-actions"><button class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn" onclick="saveAsset()">Save Asset</button></div>
+</div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const STORAGE_KEY="homecare_assets_v1";
+let assets=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
+
+function localDate(s){if(!s)return null;const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function isoLocal(d){return d.toISOString().slice(0,10)}
+function statusOf(a){
+  const last=localDate(a.lastService); if(!last)return {status:"unknown",days:null,date:null};
+  const next=new Date(last); next.setDate(next.getDate()+Number(a.interval||30));
+  const today=new Date(); today.setHours(0,0,0,0);
+  const days=Math.round((next-today)/86400000);
+  if(days<0)return {status:"overdue",days:Math.abs(days),date:isoLocal(next)};
+  if(days===0)return {status:"today",days:0,date:isoLocal(next)};
+  if(days<=7)return {status:"upcoming",days,date:isoLocal(next)};
+  return {status:"healthy",days,date:isoLocal(next)};
+}
+function statusLabel(s){
+  if(s.status==="overdue")return `Overdue by ${s.days} day${s.days===1?"":"s"}`;
+  if(s.status==="today")return "Due today";
+  if(s.status==="upcoming")return `Due in ${s.days} day${s.days===1?"":"s"}`;
+  if(s.status==="healthy")return `Due in ${s.days} days`;
+  return "Date unavailable";
+}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(assets));render()}
+function render(){
+  const data=assets.map(a=>({...a,calc:statusOf(a)}));
+  document.getElementById("total").textContent=data.length;
+  document.getElementById("overdue").textContent=data.filter(x=>x.calc.status==="overdue").length;
+  document.getElementById("week").textContent=data.filter(x=>["today","upcoming"].includes(x.calc.status)).length;
+  document.getElementById("healthy").textContent=data.filter(x=>x.calc.status==="healthy").length;
+
+  const overview=document.getElementById("overview");
+  overview.innerHTML=data.length?data.slice(0,6).map(a=>`
+    <div class="asset-row">
+      <div><div class="asset-name">${esc(a.name)}</div><div class="asset-meta">${esc(a.category)} · Next service: ${a.calc.date||"N/A"}</div></div>
+      <span class="badge ${a.calc.status}">${statusLabel(a.calc)}</span>
+    </div>`).join(""):`<div class="empty">No assets yet. Add your first home asset.</div>`;
+
+  const grid=document.getElementById("assetGrid");
+  grid.innerHTML=data.length?data.map(a=>`
+    <div class="card asset-card">
+      <h3>${esc(a.name)}</h3><div class="muted">${esc(a.category)}</div>
+      <div class="date">Last service: ${a.lastService||"N/A"}<br>Next service: ${a.calc.date||"N/A"}<br>Interval: ${a.interval} days</div>
+      <span class="badge ${a.calc.status}">${statusLabel(a.calc)}</span>
+      <div class="actions"><button class="btn secondary" onclick="editAsset('${a.id}')">Edit</button><button class="btn danger" onclick="deleteAsset('${a.id}')">Delete</button></div>
+    </div>`).join(""):`<div class="card empty">No assets added yet.</div>`;
+}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function openModal(id=null){
+  document.getElementById("modal").classList.add("show");
+  document.getElementById("modalTitle").textContent=id?"Edit Asset":"Add Asset";
+  document.getElementById("editId").value=id||"";
+  if(id){const a=assets.find(x=>x.id===id);document.getElementById("assetName").value=a.name;document.getElementById("category").value=a.category;document.getElementById("lastService").value=a.lastService;document.getElementById("interval").value=a.interval}
+  else{document.getElementById("assetName").value="";document.getElementById("category").value="HVAC";document.getElementById("lastService").value=isoLocal(new Date());document.getElementById("interval").value="30"}
+}
+function closeModal(){document.getElementById("modal").classList.remove("show")}
+function saveAsset(){
+  const name=document.getElementById("assetName").value.trim(), last=document.getElementById("lastService").value;
+  if(!name||!last){toast("Please fill in all required fields.");return}
+  const id=document.getElementById("editId").value;
+  const obj={id:id||Date.now().toString(),name,category:document.getElementById("category").value,lastService:last,interval:Number(document.getElementById("interval").value)};
+  if(id)assets=assets.map(a=>a.id===id?obj:a);else assets.push(obj);
+  save();closeModal();toast(id?"Asset updated!":"Asset added successfully!");
+}
+function editAsset(id){openModal(id)}
+function deleteAsset(id){if(confirm("Delete this asset?")){assets=assets.filter(a=>a.id!==id);save();toast("Asset deleted.")}}
+function clearAssets(){if(confirm("Delete all assets?")){assets=[];save();toast("All assets cleared.")}}
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
+}
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+function toast(t){const x=document.getElementById("toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",2500)}
+function askQuick(q){showPage("agent");document.getElementById("question").value=q;sendMessage()}
+function addMessage(text,type){const d=document.createElement("div");d.className="msg "+type;d.textContent=text;document.getElementById("messages").appendChild(d);d.scrollIntoView({behavior:"smooth"})}
+async function sendMessage(){
+  const input=document.getElementById("question"), q=input.value.trim(); if(!q)return;
+  addMessage(q,"user");input.value="";
+  addMessage("Thinking...","ai");
+  const box=document.getElementById("messages"), thinking=box.lastElementChild;
+  try{
+    const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q,assets})});
+    const data=await r.json(); thinking.remove();
+    if(!r.ok||!data.success)throw new Error(data.error||"Backend error");
+    addMessage(data.answer,"ai");
+  }catch(e){thinking.remove();addMessage("I couldn't connect to the HomeCare AI backend. Make sure backend.py is running and your Groq API key is valid.\n\nError: "+e.message,"ai")}
+}
+function toggleDark(){document.getElementById("darkToggle").classList.toggle("on")}
+render();
+</script>
+</body>
+</html>
